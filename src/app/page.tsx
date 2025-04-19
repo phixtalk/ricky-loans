@@ -88,7 +88,7 @@ export default function Home() {
       <header className="bg-blue-900 text-white py-12 px-6 text-center">
         <div className="flex justify-center">
           <Image
-            src="/logo.png"
+            src="./logo.png"
             alt="Ricky Loans and Finance"
             width={200}
             height={200}
