@@ -212,7 +212,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="text-center py-6 bg-gray-100 text-sm">
         &copy; {new Date().getFullYear()} Ricky Loans and Finance. All rights
-        reserved
+        reserved.
       </footer>
     </main>
   );
