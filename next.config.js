@@ -7,8 +7,6 @@ const nextConfig = {
   distDir: "out",
   trailingSlash: true,
   reactStrictMode: true,
-  basePath: isGithubPages ? "/ricky-loans" : "",
-  assetPrefix: isGithubPages ? "/ricky-loans/" : "",
 };
 
 module.exports = nextConfig;
