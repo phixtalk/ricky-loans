@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   const [formData, setFormData] = useState({
@@ -89,7 +90,7 @@ export default function Home() {
       <header className="bg-blue-900 text-white py-12 px-6 text-center">
         <div className="flex justify-center">
           <Image
-            src="./logo.png"
+            src="/logo.png"
             alt="Ricky Loans and Finance"
             width={200}
             height={200}
@@ -100,6 +101,14 @@ export default function Home() {
         <p className="text-lg mt-2">
           Your Trusted Partner for Loans & Accounting Solutions
         </p>
+        <div className="mt-4">
+          <Link
+            href="/knowledge-base"
+            className="text-green-400 hover:text-white text-lg"
+          >
+            📖 Visit our Knowledge Base
+          </Link>
+        </div>
       </header>
 
       {/* Services */}
