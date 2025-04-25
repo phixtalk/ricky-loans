@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function Home() {
+  const isProd = process.env.NODE_ENV === "production";
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -90,7 +92,7 @@ export default function Home() {
       <header className="bg-blue-900 text-white py-12 px-6 text-center">
         <div className="flex justify-center">
           <Image
-            src="/logo.png"
+            src={`${isProd ? "." : ""}/logo.png`}
             alt="Ricky Loans and Finance"
             width={200}
             height={200}
