@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Feedback } from "./components/Feedback";
 
 type Leads = {
   name: string;
@@ -87,8 +88,8 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-900 text-white">
-      <main className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-4">
-        <div className="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-8 w-full max-w-xl text-center">
+      <main className="flex-grow flex items-center justify-center p-4">
+        <div className="w-full max-w-xl p-8 bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl">
           <h1 className="text-2xl font-bold text-white mb-2">
             Free LinkedIn Lead Generator
           </h1>
@@ -160,7 +161,7 @@ export default function HomePage() {
                     ))}
                   </motion.div>
                 )}
-                <ul className="text-sm max-h-64 overflow-y-auto border border-gray-700 rounded p-3 bg-gray-700">
+                <ul className="text-sm max-h-72 overflow-y-auto border border-gray-700 rounded p-3 bg-gray-700">
                   {results.map((r, idx) => (
                     <li
                       key={idx}
@@ -181,12 +182,12 @@ export default function HomePage() {
               </motion.div>
             )}
           </AnimatePresence>
+          <Feedback />
         </div>
       </main>
 
       <footer className="text-center py-6 bg-gray-800 text-sm text-gray-400">
-        &copy; {new Date().getFullYear()} Ricky Loans and Finance. All rights
-        reserved.
+        &copy; {new Date().getFullYear()} Cicero AI. All rights reserved.
       </footer>
     </div>
   );
