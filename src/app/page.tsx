@@ -1,231 +1,193 @@
 "use client";
+
 import { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 
-export default function Home() {
-  const isProd = process.env.NODE_ENV === "production";
+type Leads = {
+  name: string;
+  title: string;
+  company: string;
+  location: string;
+  url: string;
+};
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    message: "",
-    website: "", // Honeypot
-  });
+const leads = [
+  {
+    name: "Alice Johnson",
+    title: "Senior Product Manager",
+    company: "TechNova Inc.",
+    location: "San Francisco, CA",
+    url: "https://www.linkedin.com/in/alicejohnson",
+  },
+  {
+    name: "Brian Chen",
+    title: "Head of Engineering",
+    company: "CodeWave Labs",
+    location: "New York, NY",
+    url: "https://www.linkedin.com/in/brianc",
+  },
+  {
+    name: "Clara Martinez",
+    title: "Marketing Director",
+    company: "BrightSpark Media",
+    location: "Austin, TX",
+    url: "https://www.linkedin.com/in/claramartinez",
+  },
+  {
+    name: "David Kim",
+    title: "UX Designer",
+    company: "PixelWorks Studio",
+    location: "Seattle, WA",
+    url: "https://www.linkedin.com/in/davidkimux",
+  },
+  {
+    name: "Eva Thompson",
+    title: "Sales Manager",
+    company: "GrowthEdge Solutions",
+    location: "Chicago, IL",
+    url: "https://www.linkedin.com/in/evathompson",
+  },
+];
 
-  const [errors, setErrors] = useState<string[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+export default function HomePage() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Leads[]>(leads);
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleSearch = async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+
+    const res = await fetch("/api/search", {
+      method: "POST",
+      body: JSON.stringify({ query }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const data = await res.json();
+    setResults(data.leads || []);
+    setLoading(false);
   };
 
-  const validateForm = () => {
-    const newErrors: string[] = [];
+  const downloadCSV = () => {
+    const csv = [
+      ["Name", "Title", "Company", "Location", "LinkedIn URL"],
+      ...results.map((r) => [r.name, r.title, r.company, r.location, r.url]),
+    ]
+      .map((row) => row.join(","))
+      .join("\n");
 
-    if (!formData.name.trim()) newErrors.push("Name is required.");
-    if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/))
-      newErrors.push("Valid email is required.");
-    if (!formData.phone.trim()) newErrors.push("Phone number is required.");
-    if (formData.message.trim().length < 10)
-      newErrors.push("Message must be at least 10 characters.");
-
-    return newErrors;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const validationErrors = validateForm();
-    setErrors(validationErrors);
-    if (validationErrors.length > 0) return;
-
-    // Honeypot check
-    if (formData.website) return; // bot trap
-
-    setSubmitting(true);
-    try {
-      const res = await fetch(
-        "http://localhost:5678/webhook-test/form-inquiry",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            sender: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            message: formData.message,
-            source: "website",
-          }),
-        }
-      );
-
-      if (res.ok) {
-        setSubmitted(true);
-        setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          message: "",
-          website: "",
-        });
-      } else {
-        setErrors(["Failed to submit the form. Please try again later."]);
-      }
-    } catch (err) {
-      console.error(err);
-      setErrors(["Something went wrong. Please try again."]);
-    } finally {
-      setSubmitting(false);
-    }
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "linkedin-leads.csv";
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
-    <main className="font-sans text-gray-800">
-      {/* Hero */}
-      <header className="bg-blue-900 text-white py-12 px-6 text-center">
-        <div className="flex justify-center">
-          <Image
-            src={`${isProd ? "." : ""}/logo.png`}
-            alt="Ricky Loans and Finance"
-            width={200}
-            height={200}
-            className="mb-4"
-          />
-        </div>
-        <h1 className="text-4xl font-bold">Ricky Loans and Finance</h1>
-        <p className="text-lg mt-2">
-          Your Trusted Partner for Loans & Accounting Solutions
-        </p>
-        <div className="mt-4">
-          <Link
-            href="/knowledge-base"
-            className="text-green-400 hover:text-white text-lg"
-          >
-            📖 Visit our Knowledge Base
-          </Link>
-        </div>
-      </header>
-
-      {/* Services */}
-      <section className="py-12 px-6 bg-gray-100 text-center">
-        <h2 className="text-2xl font-semibold mb-6">Our Services</h2>
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <div className="p-6 border rounded shadow bg-white">
-            <h3 className="text-xl font-bold mb-2">Loan Services</h3>
-            <p>
-              Personal and business loan assistance with expert consultation and
-              fast approvals.
-            </p>
-          </div>
-          <div className="p-6 border rounded shadow bg-white">
-            <h3 className="text-xl font-bold mb-2">Accounting Services</h3>
-            <p>
-              Professional bookkeeping, tax preparation, and business financial
-              advisory.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Form */}
-      <section className="py-12 px-6 bg-white">
-        <h2 className="text-2xl font-semibold mb-4 text-center">
-          Get in Touch
-        </h2>
-        <p className="text-center text-sm text-gray-600 mb-6">
-          You can also contact us at{" "}
-          <a
-            href="mailto:nicheai.ng@gmail.com"
-            className="text-blue-700 font-medium"
-          >
-            nicheai.ng@gmail.com
-          </a>
-        </p>
-
-        {submitted ? (
-          <p className="text-center text-green-600 font-medium">
-            Thanks! Your message has been sent.
+    <div className="flex flex-col min-h-screen bg-gray-900 text-white">
+      <main className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-4">
+        <div className="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-8 w-full max-w-xl text-center">
+          <h1 className="text-2xl font-bold text-white mb-2">
+            Free LinkedIn Lead Generator
+          </h1>
+          <p className="text-gray-300 mb-6">
+            Use keywords to describe your search
           </p>
-        ) : (
-          <form onSubmit={handleSubmit} className="max-w-xl mx-auto space-y-4">
-            {/* Hidden honeypot field */}
-            <input
-              type="text"
-              name="website"
-              value={formData.website}
-              onChange={handleChange}
-              style={{ display: "none" }}
-              tabIndex={-1}
-              autoComplete="off"
-            />
 
-            {errors.length > 0 && (
-              <ul className="bg-red-100 text-red-700 p-3 rounded text-sm">
-                {errors.map((err, idx) => (
-                  <li key={idx}>• {err}</li>
-                ))}
-              </ul>
+          <label className="block text-left text-sm font-medium text-gray-300 mb-1">
+            Enter search parameters <span className="text-red-400">*</span>
+          </label>
+          <textarea
+            className="w-full border border-gray-600 bg-gray-700 rounded-md p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
+            placeholder="e.g. ceo fintech germany OR marketing director canada"
+            rows={2}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+
+          <div className="text-left mt-2 text-xs text-gray-400">
+            💡 Try combining job titles, industries, and countries
+            <br />
+            Examples: <code className="text-blue-300">founder saas france</code>
+            , <code className="text-blue-300">recruiter healthcare dubai</code>
+          </div>
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            whileHover={{ scale: 1.03 }}
+            onClick={handleSearch}
+            disabled={loading}
+            className="mt-6 bg-red-500 cursor-pointer hover:bg-red-600 text-white font-semibold py-2.5 px-6 rounded-md w-full transition-all"
+          >
+            {loading ? "Searching..." : "Submit"}
+          </motion.button>
+
+          <AnimatePresence>
+            {results.length > 0 && (
+              <motion.div
+                key="results"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.5 }}
+                className="mt-8 text-left"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-lg font-semibold">Results</h2>
+                  <button
+                    onClick={downloadCSV}
+                    className="bg-green-600 cursor-pointer hover:bg-green-700 text-white text-sm font-medium py-1.5 px-4 rounded-md"
+                  >
+                    Download CSV
+                  </button>
+                </div>
+
+                {loading && (
+                  <motion.div
+                    key="loading"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="mt-8 space-y-4"
+                  >
+                    {[...Array(5)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="animate-pulse bg-gray-700 rounded-md h-14 w-full"
+                      />
+                    ))}
+                  </motion.div>
+                )}
+                <ul className="text-sm max-h-64 overflow-y-auto border border-gray-700 rounded p-3 bg-gray-700">
+                  {results.map((r, idx) => (
+                    <li
+                      key={idx}
+                      className="mb-2 border-b border-gray-600 pb-2"
+                    >
+                      <strong className="text-white">{r.name}</strong> –{" "}
+                      {r.title} at {r.company} ({r.location})<br />
+                      <a
+                        href={r.url}
+                        className="text-blue-400 hover:underline"
+                        target="_blank"
+                      >
+                        View Profile
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
             )}
+          </AnimatePresence>
+        </div>
+      </main>
 
-            <input
-              name="name"
-              type="text"
-              placeholder="Full Name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full border border-gray-300 p-3 rounded"
-              required
-            />
-            <input
-              name="email"
-              type="email"
-              placeholder="Email Address"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full border border-gray-300 p-3 rounded"
-              required
-            />
-            <input
-              name="phone"
-              type="tel"
-              placeholder="Phone Number"
-              value={formData.phone}
-              onChange={handleChange}
-              className="w-full border border-gray-300 p-3 rounded"
-              required
-            />
-            <textarea
-              name="message"
-              placeholder="Your Message"
-              rows={5}
-              value={formData.message}
-              onChange={handleChange}
-              className="w-full border border-gray-300 p-3 rounded"
-              required
-            />
-            <button
-              type="submit"
-              disabled={submitting}
-              className="bg-blue-900 text-white py-3 px-6 rounded hover:bg-blue-800 transition cursor-pointer"
-            >
-              {submitting ? "Sending..." : "Submit Inquiry"}
-            </button>
-          </form>
-        )}
-      </section>
-
-      {/* Footer */}
-      <footer className="text-center py-6 bg-gray-100 text-sm">
+      <footer className="text-center py-6 bg-gray-800 text-sm text-gray-400">
         &copy; {new Date().getFullYear()} Ricky Loans and Finance. All rights
         reserved.
       </footer>
-    </main>
+    </div>
   );
 }
