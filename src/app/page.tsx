@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Feedback } from "./components/Feedback";
+import { useSnackbar } from "./providers/SnackbarProvider";
 
 type Leads = {
   name: string;
@@ -12,60 +13,45 @@ type Leads = {
   url: string;
 };
 
-const leads = [
-  {
-    name: "Alice Johnson",
-    title: "Senior Product Manager",
-    company: "TechNova Inc.",
-    location: "San Francisco, CA",
-    url: "https://www.linkedin.com/in/alicejohnson",
-  },
-  {
-    name: "Brian Chen",
-    title: "Head of Engineering",
-    company: "CodeWave Labs",
-    location: "New York, NY",
-    url: "https://www.linkedin.com/in/brianc",
-  },
-  {
-    name: "Clara Martinez",
-    title: "Marketing Director",
-    company: "BrightSpark Media",
-    location: "Austin, TX",
-    url: "https://www.linkedin.com/in/claramartinez",
-  },
-  {
-    name: "David Kim",
-    title: "UX Designer",
-    company: "PixelWorks Studio",
-    location: "Seattle, WA",
-    url: "https://www.linkedin.com/in/davidkimux",
-  },
-  {
-    name: "Eva Thompson",
-    title: "Sales Manager",
-    company: "GrowthEdge Solutions",
-    location: "Chicago, IL",
-    url: "https://www.linkedin.com/in/evathompson",
-  },
-];
-
 export default function HomePage() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Leads[]>(leads);
+  const [results, setResults] = useState<Leads[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const { showSnackbar } = useSnackbar();
 
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setQuery(value);
+    setError("");
+
+    if (!value.trim()) setError("Search cannot be empty.");
+  };
   const handleSearch = async () => {
-    if (!query.trim()) return;
+    if (!query.trim()) {
+      setError("Search cannot be empty.");
+      return;
+    }
+
+    setError("");
     setLoading(true);
 
-    const res = await fetch("/api/search", {
-      method: "POST",
-      body: JSON.stringify({ query }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const data = await res.json();
-    setResults(data.leads || []);
+    try {
+      const res = await fetch("/api/search", {
+        method: "POST",
+        body: JSON.stringify({ query }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+
+      setResults(data.results || []);
+    } catch (err) {
+      showSnackbar({
+        mode: "error",
+        message: "Something went wrong. Please try again later.",
+      });
+      console.error("Error fetching leads:", err);
+    }
     setLoading(false);
   };
 
@@ -105,8 +91,9 @@ export default function HomePage() {
             placeholder="e.g. ceo fintech germany OR marketing director canada"
             rows={2}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={handleChange}
           />
+          {error && <p className="text-red-400 mt-2 text-sm">{error}</p>}
 
           <div className="text-left mt-2 text-xs text-gray-400">
             💡 Try combining job titles, industries, and countries
@@ -120,9 +107,37 @@ export default function HomePage() {
             whileHover={{ scale: 1.03 }}
             onClick={handleSearch}
             disabled={loading}
-            className="mt-6 bg-red-500 cursor-pointer hover:bg-red-600 text-white font-semibold py-2.5 px-6 rounded-md w-full transition-all"
+            className={`mt-6 bg-red-500  hover:bg-red-600 text-white font-semibold py-2.5 px-6 rounded-md w-full transition-all flex items-center justify-center gap-2 ${
+              loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+            }`}
           >
-            {loading ? "Searching..." : "Submit"}
+            {loading ? (
+              <>
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  />
+                </svg>
+                Searching...
+              </>
+            ) : (
+              "Search"
+            )}
           </motion.button>
 
           <AnimatePresence>
